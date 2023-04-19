@@ -291,3 +291,80 @@ if (slash_pos != NULL) {
 return 0;
 }
 */
+#ifndef SCANNER_H
+#define SCANNER_H
+
+#define MAX_CIDR_LEN 18
+
+
+struct ip_list {
+    struct in_addr* ips;
+    int count;
+};
+
+
+
+void print_ips(struct ip_list* list);
+struct ip_list* get_ip_list(char* input);
+
+#endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include "scanner.h"
+
+void print_ips(struct ip_list* list) {
+    printf("IP Addresses:\n");
+    for (int i = 0; i < list->count; i++) {
+        printf("%s\n", inet_ntoa(list->ips[i]));
+    }
+}
+
+struct ip_list* get_ip_list(char* input) {
+    struct ip_list* list = malloc(sizeof(struct ip_list));
+
+    int cidr = -1;
+    char* cidr_str = strchr(input, '/');
+    if (cidr_str != NULL) {
+        *cidr_str = '\0';
+        cidr = atoi(cidr_str + 1);
+    }
+
+    char* addr_str = strtok(input, ",");
+    while (addr_str != NULL) {
+        struct in_addr ip_addr;
+
+        if (inet_pton(AF_INET, addr_str, &ip_addr) == 1) {
+            if (cidr >= 0) {
+                uint32_t ip = ntohl(ip_addr.s_addr);
+
+                int mask = (cidr == 0) ? 0 : 0xffffffff << (32 - cidr);
+                int max_ips = (cidr == 32) ? 1 : (1 << (32 - cidr)) - 2; // maximum number of IPs in the subnet
+                list->ips = realloc(list->ips, sizeof(struct in_addr) * (list->count + max_ips));
+
+                for (int i = 0; i <= 0xff && list->count <= max_ips; i++) {
+                    for (int j = 1; j <= 0xff && list->count < max_ips; j++) {
+                        uint32_t new_ip = (ip & mask) | (i << 8) | j;
+                        struct in_addr* new_addr = &(list->ips[list->count]);
+                        new_addr->s_addr = htonl(new_ip);
+                        list->count++;
+                    }
+                }
+            } else {
+                list->ips = realloc(list->ips, sizeof(struct in_addr) * (list->count + 1));
+                struct in_addr* new_addr = &(list->ips[list->count]);
+                memcpy(new_addr, &ip_addr, sizeof(struct in_addr));
+                list->count++;
+            }
+        }
+
+        addr_str = strtok(NULL, ",");
+    }
+
+    return list;
+}
+
+
+
