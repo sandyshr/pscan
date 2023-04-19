@@ -291,6 +291,9 @@ if (slash_pos != NULL) {
 return 0;
 }
 */
+
+/*
+//---------------------------------------------------------------------------
 #ifndef SCANNER_H
 #define SCANNER_H
 
@@ -308,7 +311,7 @@ void print_ips(struct ip_list* list);
 struct ip_list* get_ip_list(char* input);
 
 #endif
-
+//-------------------------------------------------------------------------------
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -365,6 +368,7 @@ struct ip_list* get_ip_list(char* input) {
 
     return list;
 }
-
+//------------------------------------------------
+*/
 
 
